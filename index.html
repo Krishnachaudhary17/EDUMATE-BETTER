@@ -1,0 +1,40 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>EduMate - Class Management</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <script type="text/javascript" src="https://cdn.jsdelivr.net/npm/@emailjs/browser@3/dist/email.min.js"></script>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body class="bg-gray-100 text-gray-800">
+    <div id="login-screen" class="min-h-screen flex items-center justify-center gradient-bg p-4">
+        <div class="w-full max-w-md bg-white rounded-xl shadow-2xl p-8">
+            <div class="text-center mb-8">
+                <h1 class="text-4xl font-bold text-gray-800">EduMate</h1>
+                <p class="text-gray-500 mt-2">Classroom Assistant</p>
+            </div>
+            <form id="login-form">
+                <input type="email" id="email" class="w-full px-4 py-2 border rounded mb-4" placeholder="Email" required>
+                <input type="password" id="password" class="w-full px-4 py-2 border rounded mb-6" placeholder="Password" required>
+                <button type="submit" class="w-full bg-indigo-600 text-white font-bold py-3 rounded hover:bg-indigo-700">Login</button>
+                <p class="text-center mt-4 text-sm"><a href="#" id="show-signup" class="text-indigo-600">Create Account</a></p>
+            </form>
+            <form id="signup-form" class="hidden">
+                <input type="text" id="signup-name" class="w-full px-4 py-2 border rounded mb-4" placeholder="Full Name" required>
+                <input type="email" id="signup-email" class="w-full px-4 py-2 border rounded mb-4" placeholder="Email" required>
+                <input type="password" id="signup-password" class="w-full px-4 py-2 border rounded mb-6" placeholder="Password" required>
+                <button type="submit" class="w-full bg-green-600 text-white font-bold py-3 rounded hover:bg-green-700">Sign Up</button>
+                <p class="text-center mt-4 text-sm"><a href="#" id="show-login" class="text-indigo-600">Back to Login</a></p>
+            </form>
+            <p id="login-error" class="text-red-500 text-sm mt-4 text-center hidden"></p>
+        </div>
+    </div>
+    <div id="app-screen" class="hidden"></div>
+    <div id="modal-container"></div>
+    <script src="app.js" defer></script>
+</body>
+</html>
