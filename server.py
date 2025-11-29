@@ -3,7 +3,7 @@ import uuid
 from flask import Flask, jsonify, request, send_from_directory
 from flask_cors import CORS
 from werkzeug.utils import secure_filename
-from database import db, Class, Student, Teacher, Timetable, Notification, Attendance, Exam, Score
+from database import db, Class, Student, Teacher, Timetable, Notification, Attendance, Exam, Score, Assignment
 
 app = Flask(__name__)
 CORS(app)
@@ -17,7 +17,7 @@ app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 # --- UPLOAD CONFIG ---
 UPLOAD_FOLDER = os.path.join(base_dir, 'static', 'uploads')
 app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
-os.makedirs(UPLOAD_FOLDER, exist_ok=True) # Create folder if missing
+os.makedirs(UPLOAD_FOLDER, exist_ok=True) 
 
 db.init_app(app)
 
@@ -49,6 +49,18 @@ def login():
     if t and t.password == data['password']: return jsonify(t.to_dict())
     return jsonify({'error': 'Invalid credentials'}), 401
 
+# --- TEACHER PROFILE (NEW) ---
+@app.route('/api/teacher/<tid>', methods=['PUT'])
+def update_teacher(tid):
+    t = Teacher.query.get(tid)
+    if not t: return jsonify({'error': 'Not found'}), 404
+    data = request.json
+    if 'name' in data: t.name = data['name']
+    if 'password' in data and data['password']: t.password = data['password'] # Only update if not empty
+    if 'notepad' in data: t.notepad = data['notepad']
+    db.session.commit()
+    return jsonify(t.to_dict())
+
 # --- CLASSES ---
 @app.route('/api/classes', methods=['GET', 'POST'])
 def handle_classes():
@@ -69,18 +81,9 @@ def delete_class(cid):
 @app.route('/api/classes/<cid>/students', methods=['POST'])
 def add_student(cid):
     data = request.json
-    
-    # Check for Duplicate Roll No in this Class
     existing = Student.query.filter_by(class_id=cid, roll=data['roll']).first()
-    if existing:
-        return jsonify({'error': f"Roll Number {data['roll']} already exists in this class!"}), 400
-
-    s = Student(
-        id="s"+str(uuid.uuid4())[:8], name=data['name'], roll=data['roll'], 
-        email=data.get('email',''), status=data.get('status','Day Scholar'),
-        phone=data.get('phone',''), parent_phone=data.get('parentPhone',''),
-        class_id=cid
-    )
+    if existing: return jsonify({'error': f"Roll Number {data['roll']} already exists!"}), 400
+    s = Student(id="s"+str(uuid.uuid4())[:8], name=data['name'], roll=data['roll'], email=data.get('email',''), status=data.get('status','Day Scholar'), phone=data.get('phone',''), parent_phone=data.get('parentPhone',''), class_id=cid)
     db.session.add(s)
     db.session.commit()
     return jsonify(s.to_dict()), 201
@@ -92,9 +95,6 @@ def update_student(sid):
     data = request.json
     if 'address' in data: s.address = data['address']
     if 'previousMarks' in data: s.previous_marks = data['previousMarks']
-    if 'status' in data: s.status = data['status']
-    if 'phone' in data: s.phone = data['phone']
-    if 'parentPhone' in data: s.parent_phone = data['parentPhone']
     db.session.commit()
     return jsonify(s.to_dict())
 
@@ -117,19 +117,16 @@ def get_analytics(sid):
         if ex: exam_data.append({'title': ex.title, 'total': ex.total_marks, 'obtained': sc.marks_obtained})
     return jsonify({'attendance': {'percentage': percentage, 'present': present, 'total': total}, 'exams': exam_data})
 
-# --- FILE UPLOAD ROUTE ---
+# --- FILE UPLOAD ---
 @app.route('/api/upload', methods=['POST'])
 def upload_file():
     if 'file' not in request.files: return jsonify({'error': 'No file part'}), 400
     file = request.files['file']
     if file.filename == '': return jsonify({'error': 'No selected file'}), 400
-    
     if file:
         filename = secure_filename(file.filename)
         unique_filename = str(uuid.uuid4())[:8] + "_" + filename
         file.save(os.path.join(app.config['UPLOAD_FOLDER'], unique_filename))
-        
-        # Generate URL
         file_url = request.host_url + 'static/uploads/' + unique_filename
         return jsonify({'url': file_url})
 
@@ -195,6 +192,21 @@ def handle_scores():
     eid = request.args.get('examId')
     if eid: return jsonify([s.to_dict() for s in Score.query.filter_by(exam_id=eid).all()])
     return jsonify([])
+
+# --- ASSIGNMENTS ---
+@app.route('/api/assignments', methods=['GET', 'POST'])
+def handle_assignments():
+    if request.method == 'GET': return jsonify([a.to_dict() for a in Assignment.query.all()])
+    data = request.json
+    db.session.add(Assignment(
+        id="asg"+str(uuid.uuid4())[:8], 
+        title=data['title'], 
+        class_name=data['className'], 
+        date=data['date'],
+        category=data.get('category', 'Assignment')
+    ))
+    db.session.commit()
+    return jsonify({'msg': 'Saved'}), 201
 
 if __name__ == '__main__':
     app.run(debug=True, port=5000)
