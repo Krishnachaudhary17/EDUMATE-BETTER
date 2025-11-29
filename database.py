@@ -26,14 +26,12 @@ class Student(db.Model):
     name = db.Column(db.String(120), nullable=False)
     roll = db.Column(db.String(20), nullable=False)
     email = db.Column(db.String(120), default='')
-    # --- NEW FIELDS ---
-    status = db.Column(db.String(50), default='Day Scholar') # Day Scholar / Hosteller
+    status = db.Column(db.String(50), default='Day Scholar')
     phone = db.Column(db.String(20), default='')
     parent_phone = db.Column(db.String(20), default='')
     address = db.Column(db.Text, default='') 
-    previous_marks = db.Column(db.Text, default='') # To store past semester data
+    previous_marks = db.Column(db.Text, default='') 
     class_id = db.Column(db.String(80), db.ForeignKey('class.id'), nullable=False)
-    
     scores = db.relationship('Score', backref='student', lazy=True, cascade="all, delete-orphan")
     attendance_records = db.relationship('Attendance', backref='student', lazy=True, cascade="all, delete-orphan")
 
@@ -86,3 +84,21 @@ class Score(db.Model):
     student_id = db.Column(db.String(80), db.ForeignKey('student.id'), nullable=False)
     marks_obtained = db.Column(db.String(20), default="0")
     def to_dict(self): return {'examId': self.exam_id, 'studentId': self.student_id, 'marks': self.marks_obtained}
+
+# --- ASSIGNMENTS & MATERIALS (UPDATED) ---
+class Assignment(db.Model):
+    id = db.Column(db.String(80), primary_key=True)
+    title = db.Column(db.String(100), nullable=False)
+    class_name = db.Column(db.String(100), nullable=False)
+    date = db.Column(db.String(50), nullable=False)
+    # NEW COLUMN FOR CATEGORY (Assignment vs Note)
+    category = db.Column(db.String(50), default='Assignment') 
+    
+    def to_dict(self): 
+        return {
+            'id': self.id, 
+            'title': self.title, 
+            'className': self.class_name, 
+            'date': self.date,
+            'category': self.category
+        }
